@@ -46,6 +46,7 @@ app.js                      App-Einstiegspunkt (unverändert aus dem Template)
 watchface/index.js          das komplette Watchface
 assets/480x480-amazfit-t-rex-3-pro/
   icon.png                  Vorschaubild, 480 x 480
+  fonts/                    Chakra Petch Medium + OFL.txt
   image/rain/               Frames des Matrix-Regens
   image/flap/big/           Klapp-Frames der großen Ziffern (noch leer)
   image/flap/small/         Klapp-Frames der kleinen Ziffern (noch leer)
@@ -82,16 +83,32 @@ msedge --headless=new --window-size=480,480   --screenshot=assets/480x480-amazfi
 `?icon=1` lässt den Gehäusering weg, damit exakt das 480 × 480-Panel im Bild
 ist.
 
+## Schrift
+
+Chakra Petch Medium, mitgeliefert als
+`assets/<target>/fonts/ChakraPetch-Medium.ttf` und an jedem `TEXT`-Widget über
+`font: FONT` gesetzt. Das TEXT-Widget nimmt laut
+[UI-Referenz](https://docs.zepp.com/docs/reference/device-app-api/newAPI/ui/)
+einen Pfad relativ zum Asset-Ordner — Bild-Ziffern sind dafür nicht nötig.
+
+Die Lizenz (SIL Open Font License) liegt als `OFL.txt` daneben; sie erlaubt
+das Mitliefern, verlangt aber, dass sie mitgeht. Nicht löschen.
+
+Die Zellenbreiten unten stammen aus der gemessenen Ziffernbreite dieser
+Schrift: **50,9 px bei 80 px** Schriftgröße und **14,0 px bei 22 px**. Wer die
+Schrift tauscht, muss neu messen — sonst stehen die Ziffern schief in ihren
+Zellen oder werden abgeschnitten.
+
 ## Layout (480 × 480)
 
 | Element | Position |
 | --- | --- |
 | `> SYS.TIME` | y 150, zentriert, 22 px |
-| Uhrzeit HH:MM | 4 Zellen à 44 × 76 + 24 px Doppelpunkt, Block ab x 140, auf y 240 zentriert |
-| Sekunden | 2 Zellen à 16 × 30 ab x 352 |
-| Cursor | 10 × 26 bei x 392 |
+| Uhrzeit HH:MM | 4 Zellen à 51 × 76 + 20 px Doppelpunkt, Block ab x 128, auf y 240 zentriert |
+| Sekunden | 2 Zellen à 18 × 30 ab x 364 |
+| Cursor | 10 × 26 bei x 408 |
 | Trennlinie | x 110, y 296, 260 × 1 |
-| Datenzeilen | Label x 137, Wert x 233, ab y 308, Abstand 32 |
+| Datenzeilen | Label x 137, Wert x 233, Ziffernzelle 14 px, ab y 308, Abstand 32 |
 
 Oben und unten bleiben 44 px frei — dort zeichnet das System den Statuspunkt
 und den Offline-Voice-Hinweis. Mindestschriftgröße auf dem Zifferblatt sind
@@ -152,10 +169,11 @@ Ganz oben in `watchface/index.js`:
 
 ```js
 const USE_RAIN = true    // Matrix-Regen als Vollbild-Animation
-const USE_FLAP = false   // Klapp-Ziffern statt einfacher Textziffern
+const USE_FLAP = true    // Klapp-Ziffern statt einfacher Textziffern
 ```
 
-`USE_FLAP` braucht noch Frames; ohne sie wechseln die Ziffern hart.
+Beide brauchen die Bildfolgen unten. Stehen sie auf `false`, läuft dasselbe
+Zifferblatt ohne Regen und mit hart wechselnden Textziffern.
 
 ## Frames
 
@@ -164,11 +182,34 @@ Alles unter `assets/480x480-amazfit-t-rex-3-pro/`:
 | Ordner | Dateien | Größe | Stand |
 | --- | --- | --- | --- |
 | `rain/` | `rain_0.png` … `rain_23.png` | 480 × 480 | **fertig, 2,4 MB** |
-| `flap/big/` | `roll_<n>_<f>.png`, n = 0…9, f = 0…5 | 44 × 76 | fehlt |
-| `flap/small/` | `roll_<n>_<f>.png`, n = 0…9, f = 0…5 | 16 × 30 | fehlt |
+| `flap/big/` | `roll_<n>_<f>.png`, n = 0…9, f = 0…5 | 51 × 76 | **fertig** |
+| `flap/sec/` | `roll_<n>_<f>.png`, n = 0…9, f = 0…3 | 18 × 30 | **fertig** |
+| `flap/sml/` | `roll_<n>_<f>.png`, n = 0…9, f = 0…3 | 14 × 26 | **fertig** |
 
 Der Dateiname ist `<anim_prefix>_<index>.png` — bestätigt am offiziellen
 Sample (`anim_prefix: 'a'` → `a_0.png`).
+
+### Klapp-Ziffern
+
+**Jede Zellengröße braucht eigene Frames.** Eine `IMG_ANIM` hat genau eine
+Pixelgröße, deshalb gibt es drei Sätze: `big` für Stunde und Minute, `sec` für
+die Sekunden, `sml` für Schritte, Puls und Akku. Früher zeigten Sekunden und
+Datenwerte auf denselben Ordner, was nicht funktionieren kann.
+
+Erzeugt aus `design/frames/flap.html`, ein Aufruf pro Frame:
+
+```bash
+msedge --headless=new --window-size=51,76   --screenshot=.../image/flap/big/roll_9_3.png   "file:///<pfad>/design/frames/flap.html?size=big&from=9&f=3&c=c9ffd9&g=0,255,65"
+```
+
+`size` wählt die Zellengröße, `from` die Ausgangsziffer, `f` das Einzelbild,
+`c` die Ziffernfarbe und `g` die Glühfarbe als RGB-Tripel. Die rote Variante
+benutzt dieselbe Seite mit anderen Farbwerten.
+
+Das Tempo steckt in `FLAP_FPS` (aktuell 20). Bei sechs Frames dauert ein
+Ziffernschritt damit 300 ms; ein Sprung von 9 auf 2 klappt dreimal
+hintereinander, also knapp eine Sekunde. Höher heißt schneller und irgendwann
+unsichtbar.
 
 ### Regen
 
