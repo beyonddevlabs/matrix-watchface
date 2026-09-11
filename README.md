@@ -1,46 +1,45 @@
 # Matrix Watchface
 
-Zifferblatt für die Amazfit T-Rex 3 Pro 48 mm (Zepp OS, 480 × 480 px, rund).
-Grüner Matrix-Regen als Hintergrund, Uhrzeit und Sensorwerte in einem
-Terminal-Layout.
+Watchface for the Amazfit T-Rex 3 Pro 48 mm (Zepp OS, 480 × 480 px, round).
+Green Matrix rain as the background, time and sensor values in a terminal
+layout.
 
-![Aktives Zifferblatt](docs/screenshots/active.png)
+![Active watchface](docs/screenshots/active.png)
 
-## Funktionsumfang
+## Features
 
-- **Regen-Hintergrund** aus 24 vorgerenderten PNG-Frames (480 × 480) mit 6 fps,
-  Schleifenlänge 4 s, nahtlos geschlossen
-- **Uhrzeit** zentriert in 80 px, Sekunden rechts daneben in 28 px, Cursor
-  blinkt im Sekundentakt
-- **Datenzeilen** für Datum, Schritte, Puls und Akkustand, Label- und
-  Wertespalte auf festen X-Positionen
-- **AOD** auf eigener Widget-Ebene (`show_level.ONAL_AOD`): gedimmte Farben,
-  nur Uhrzeit, Datum und Schritte, keine Animation
-- **Chakra Petch Medium** als Schriftart, wird mit dem Paket ausgeliefert
+- **Rain background** built from 24 pre-rendered PNG frames (480 × 480) at
+  6 fps, 4 s loop, seamlessly closed
+- **Time** centred at 80 px, seconds beside it at 28 px, cursor blinking once
+  per second
+- **Data rows** for date, steps, heart rate and battery, with labels and values
+  on fixed X positions
+- **AOD** on its own widget level (`show_level.ONAL_AOD`): dimmed colours, time,
+  date and steps only, no animation
+- **Chakra Petch Medium** as the typeface, shipped with the package
 
-![Always-On-Display](docs/screenshots/aod.png)
+![Always-on display](docs/screenshots/aod.png)
 
-## Aktualisierung
+## Update strategy
 
-Ein Widget wird nur beschrieben, wenn sich sein Wert geändert hat.
+A widget is only written when its value has actually changed.
 
-| Auslöser | Aktualisiert |
+| Trigger | Updates |
 | --- | --- |
-| `Time.onPerMinute()` | Stunde, Minute, Datum, Akku, AOD-Ebene |
-| `Step.onChange()`, `HeartRate.onLastChange()` | Schritte, Puls – gepuffert, geschrieben höchstens 1× pro Sekunde |
-| `setInterval(1000)` | Sekunden und Cursor, nur bei eingeschaltetem Display |
+| `Time.onPerMinute()` | hour, minute, date, battery, AOD level |
+| `Step.onChange()`, `HeartRate.onLastChange()` | steps, heart rate – buffered, written at most once per second |
+| `setInterval(1000)` | seconds and cursor, only while the screen is on |
 
-## Voraussetzungen
+## Requirements
 
-- Amazfit T-Rex 3 Pro 48 mm, in der Zepp App gekoppelt
-- [Node.js](https://nodejs.org/) ab Version 14
-- Zepp-Konto und aktivierter Developer Mode in der Zepp App
-  (Profil → gekoppeltes Gerät → ganz nach unten scrollen)
+- Amazfit T-Rex 3 Pro 48 mm, paired with the Zepp app
+- [Node.js](https://nodejs.org/) 14 or newer
+- A Zepp account and developer mode enabled in the Zepp app
+  (Profile → paired device → scroll to the bottom)
 
 ## Installation
 
-Das Watchface liegt nicht im Zepp-Store und wird über den Entwicklermodus
-installiert.
+The watchface is not in the Zepp store; it is installed through developer mode.
 
 ```bash
 npm install -g @zeppos/zeus-cli
@@ -50,57 +49,57 @@ cd matrix-watchface
 zeus preview
 ```
 
-`zeus preview` baut das Paket und gibt einen QR-Code im Terminal aus. Diesen mit
-der Scan-Funktion im Developer Mode der Zepp App einlesen; das Watchface wird
-auf die Uhr übertragen und erscheint dort in der Zifferblattauswahl.
+`zeus preview` builds the package and prints a QR code in the terminal. Scan it
+with the scan function in the Zepp app's developer mode; the watchface is
+transferred to the watch and shows up in the watchface picker.
 
-`zeus build` erzeugt stattdessen ein `.zab`-Paket unter `dist/`.
+`zeus build` produces a `.zab` package under `dist/` instead.
 
-## Konfiguration
+## Configuration
 
-Feature-Flags am Anfang von `watchface/index.js`:
+Feature flags at the top of `watchface/index.js`:
 
-| Flag | Standard | Wirkung |
+| Flag | Default | Effect |
 | --- | --- | --- |
-| `USE_RAIN` | `true` | Regen-Animation aus `image/rain/` |
-| `USE_FLAP` | `false` | Fallblatt-Animation beim Ziffernwechsel |
+| `USE_RAIN` | `true` | rain animation from `image/rain/` |
+| `USE_FLAP` | `false` | split-flap animation on digit change |
 
-Die Fallblatt-Animation ist vollständig implementiert, die Frames liegen unter
-`image/flap/` (6 Frames für die großen Ziffern, je 4 für Sekunden und kleine
-Ziffern, 20 fps, also 300 ms pro Ziffernschritt). Ein Sprung von 9 auf 2 spielt
-9→0, 0→1 und 1→2 hintereinander ab. Auf echter Hardware läuft das noch nicht
-sauber, deshalb ist das Flag deaktiviert und die Ziffern wechseln direkt.
+The split-flap animation is fully implemented and its frames live under
+`image/flap/` (6 frames for the large digits, 4 each for seconds and small
+digits, 20 fps, so 300 ms per digit step). A jump from 9 to 2 plays 9→0, 0→1
+and 1→2 back to back. It does not run cleanly on real hardware yet, so the flag
+is off and digits change directly.
 
-![Ziffernwechsel mit Fallblatt-Animation](docs/screenshots/flap.png)
+![Digit change with the split-flap animation](docs/screenshots/flap.png)
 
-## Projektstruktur
+## Project layout
 
 ```
-app.json                    Manifest: Target, appId, Berechtigungen
-app.js                      App-Einstiegspunkt
-watchface/index.js          Layout, Widgets, Sensoranbindung
+app.json                    manifest: target, appId, permissions
+app.js                      app entry point
+watchface/index.js          layout, widgets, sensor wiring
 assets/480x480-.../image/   rain (24), flap, digit
 assets/480x480-.../fonts/   Chakra Petch Medium + OFL.txt
-design/                     HTML-Artboards des Layout-Entwurfs
-docs/screenshots/           Screenshots für dieses README
+design/                     HTML artboards of the layout draft
+docs/screenshots/           screenshots used in this README
 ```
 
-## Kompatibilität
+## Compatibility
 
-Ausgelegt auf die T-Rex 3 Pro 48 mm mit 480 × 480 px. Weitere runde
-Zepp-OS-Geräte derselben Auflösung – etwa T-Rex 3 oder T-Rex Ultra 2 – lassen
-sich über einen zusätzlichen Eintrag unter `targets` in `app.json` ergänzen.
-Die 44-mm-Variante hat 466 × 466 px und braucht ein eigenes Layout.
+Targeted at the T-Rex 3 Pro 48 mm at 480 × 480 px. Other round Zepp OS devices
+with the same resolution – the T-Rex 3 or T-Rex Ultra 2, for example – can be
+added with one more entry under `targets` in `app.json`. The 44 mm variant is
+466 × 466 px and needs a layout of its own.
 
-## Lizenz
+## Licence
 
-Chakra Petch steht unter der SIL Open Font License. Die Lizenzdatei liegt als
-`OFL.txt` neben der Schriftdatei und muss mit ausgeliefert werden.
+Chakra Petch is licensed under the SIL Open Font License. The licence file sits
+next to the font as `OFL.txt` and has to be shipped with it.
 
 ## Status
 
-Lauffähig. Offen sind die Fallblatt-Animation (siehe oben) und eine eigene
-`appId` aus der Zepp-Entwicklerkonsole, solange eine Store-Veröffentlichung
-geplant ist. Details in [DEVELOPMENT.md](DEVELOPMENT.md).
+Working. Open points are the split-flap animation (see above) and a dedicated
+`appId` from the Zepp developer console, as long as a store release is planned.
+Details in [DEVELOPMENT.md](DEVELOPMENT.md).
 
-Rote Variante: `matrix-watchface-red`.
+Red variant: `matrix-watchface-red`.
